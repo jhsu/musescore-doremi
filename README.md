@@ -21,3 +21,29 @@ A MuseScore 3 plugin that labels selected notes with solfege syllables (do, re, 
 ## License
 
 MIT
+
+---
+
+# MuseScore 3 唱名标注插件
+
+一个 MuseScore 3 插件，使用首调唱名法（do, re, mi, fa, sol, la, ti）根据当前调号为所选音符添加唱名标注。
+
+## 安装
+
+1. 下载 `doremi.qml`
+2. 复制到 MuseScore 插件文件夹：
+   - **macOS**: `~/Documents/MuseScore3/Plugins/`
+   - **Windows**: `%HOMEPATH%\Documents\MuseScore3\Plugins\`
+   - **Linux**: `~/Documents/MuseScore3/Plugins/`
+3. 在 MuseScore 中，前往 **插件 > 插件管理器**
+4. 启用 "Solfege Labels"
+
+## 使用方法
+
+1. 在乐谱中选择一个或多个小节
+2. 前往 **插件 > Solfege Labels**
+3. 唱名标注将添加到每个音符下方
+
+## 许可证
+
+MIT
