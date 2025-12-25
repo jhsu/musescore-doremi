@@ -162,11 +162,11 @@ MuseScore {
     
     // Check if a voice is selected
     function isVoiceSelected(voiceNumber) {
-        // voiceNumber is 0-based (0, 1, 2, 3 for voices 1-4)
-        if (voiceNumber === 0) return voice1Selected;
-        if (voiceNumber === 1) return voice2Selected;
-        if (voiceNumber === 2) return voice3Selected;
-        if (voiceNumber === 3) return voice4Selected;
+        // voiceNumber is 1-based (1, 2, 3, 4 for voices 1-4)
+        if (voiceNumber === 1) return voice1Selected;
+        if (voiceNumber === 2) return voice2Selected;
+        if (voiceNumber === 3) return voice3Selected;
+        if (voiceNumber === 4) return voice4Selected;
         return false;
     }
 
@@ -309,9 +309,10 @@ MuseScore {
          anchors.fill: parent
          anchors.margins: 10
 
-         Label {
-             text: "Reference Octave (octave where 1-7 have no dots)"
-         }
+          Label {
+              text: "Reference Octave (octave where 1-7 have no dots)"
+              color: "#000000"
+          }
 
          RowLayout {
              Label { text: "Octave:" }
@@ -325,40 +326,61 @@ MuseScore {
              }
          }
 
-         Label {
-             text: "Select voices to label:"
-             Layout.topMargin: 15
-         }
+          Label {
+              text: "Select voices to label:"
+              Layout.topMargin: 15
+              color: "#000000"
+          }
 
-         ColumnLayout {
-             CheckBox {
-                 id: voice1Check
-                 text: "Voice 1"
-                 checked: true
-                 onCheckedChanged: voice1Selected = checked
-             }
-             
-             CheckBox {
-                 id: voice2Check
-                 text: "Voice 2"
-                 checked: false
-                 onCheckedChanged: voice2Selected = checked
-             }
-             
-             CheckBox {
-                 id: voice3Check
-                 text: "Voice 3"
-                 checked: false
-                 onCheckedChanged: voice3Selected = checked
-             }
-             
-             CheckBox {
-                 id: voice4Check
-                 text: "Voice 4"
-                 checked: false
-                 onCheckedChanged: voice4Selected = checked
-             }
-         }
+          ColumnLayout {
+              CheckBox {
+                  id: voice1Check
+                  text: "Voice 1"
+                  checked: true
+                  onCheckedChanged: voice1Selected = checked
+                  contentItem: Text {
+                      text: "Voice 1"
+                      color: "#000000"
+                      leftPadding: parent.indicator.width + parent.spacing
+                  }
+              }
+              
+              CheckBox {
+                  id: voice2Check
+                  text: "Voice 2"
+                  checked: false
+                  onCheckedChanged: voice2Selected = checked
+                  contentItem: Text {
+                      text: "Voice 2"
+                      color: "#000000"
+                      leftPadding: parent.indicator.width + parent.spacing
+                  }
+              }
+              
+              CheckBox {
+                  id: voice3Check
+                  text: "Voice 3"
+                  checked: false
+                  onCheckedChanged: voice3Selected = checked
+                  contentItem: Text {
+                      text: "Voice 3"
+                      color: "#000000"
+                      leftPadding: parent.indicator.width + parent.spacing
+                  }
+              }
+              
+              CheckBox {
+                  id: voice4Check
+                  text: "Voice 4"
+                  checked: false
+                  onCheckedChanged: voice4Selected = checked
+                  contentItem: Text {
+                      text: "Voice 4"
+                      color: "#000000"
+                      leftPadding: parent.indicator.width + parent.spacing
+                  }
+              }
+          }
 
          RowLayout {
              Layout.alignment: Qt.AlignRight
