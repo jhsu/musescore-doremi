@@ -326,21 +326,48 @@ MuseScore {
             anchors.margins: 10
 
             Label {
-                text: "Reference Octave (octave where 1-7 have no dots)"
+                text: "Reference Octave"
                 color: palette.windowText
+                font.bold: true
+            }
+            
+            Label {
+                text: "Select the octave that matches your voice/instrument range (numbers 1-7 will have no dots in this octave)"
+                color: palette.windowText
+                wrapMode: Text.WordWrap
+                Layout.fillWidth: true
+                font.pointSize: 9
             }
 
          RowLayout {
-             Label { text: "Octave:"; color: palette.windowText }
-             ComboBox {
-                 id: octaveSelect
-                 model: ["2 (C2-B2)", "3 (C3-B3)", "4 (C4-B4)", "5 (C5-B5)", "6 (C6-B6)"]
-                 currentIndex: 2  // Default to octave 4
-                 onCurrentIndexChanged: {
-                     referenceOctave = currentIndex + 2;
-                 }
-             }
-         }
+              Label { text: "Octave:"; color: palette.windowText }
+              ComboBox {
+                  id: octaveSelect
+                  model: [
+                      "2 (C2-B2) - Bass, Low Male",
+                      "3 (C3-B3) - Tenor, High Male, Low Female",
+                      "4 (C4-B4) - Soprano, Mezzo, Standard",
+                      "5 (C5-B5) - High Soprano, Instruments",
+                      "6 (C6-B6) - Very High, Flute"
+                  ]
+                  currentIndex: 2  // Default to octave 4
+                  onCurrentIndexChanged: {
+                      referenceOctave = currentIndex + 2;
+                  }
+                  ToolTip.text: {
+                      switch(currentIndex) {
+                          case 0: return "Bass and very low male voices (baritone, bass)";
+                          case 1: return "Tenor and high male voices, also low female voices (alto)";
+                          case 2: return "Soprano and mezzo soprano voices, most instruments, standard choice";
+                          case 3: return "High soprano voices and high instruments (flute, piccolo)";
+                          case 4: return "Very high soprano and piccolo ranges";
+                          default: return "Select an octave range";
+                      }
+                  }
+                  ToolTip.visible: hovered
+                  hoverEnabled: true
+              }
+          }
 
           Label {
               text: "Select voices to label:"
