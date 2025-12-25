@@ -189,24 +189,29 @@ MuseScore {
     }
 
     function applyJianpu() {
-        var startSegment = curScore.selection.startSegment;
-        var endTick = curScore.selection.endSegment ? curScore.selection.endSegment.tick : curScore.lastSegment.tick + 1;
+        var startTick, endTick;
+        var hasSelection = curScore.selection.startSegment;
 
-        if (!startSegment) {
-            console.log("No range selection");
-            Qt.quit();
-            return;
+        if (hasSelection) {
+            startTick = curScore.selection.startSegment.tick;
+            endTick = curScore.selection.endSegment ? curScore.selection.endSegment.tick : curScore.lastSegment.tick + 1;
+        } else {
+            // No selection - process entire score
+            startTick = 0;
+            endTick = curScore.lastSegment.tick + 1;
         }
-
-        var startTick = startSegment.tick;
 
         curScore.startCmd();
 
-        // Clear existing jianpu labels in selection
+        // Clear existing jianpu labels in range
         clearJianpuLabels(startTick, endTick);
 
         var cursor = curScore.newCursor();
-        cursor.rewind(Cursor.SELECTION_START);
+        if (hasSelection) {
+            cursor.rewind(Cursor.SELECTION_START);
+        } else {
+            cursor.rewind(Cursor.SCORE_START);
+        }
 
         while (cursor.segment && cursor.tick < endTick) {
             var element = cursor.element;
