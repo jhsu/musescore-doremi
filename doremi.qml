@@ -9,7 +9,7 @@ MuseScore {
     version: "1.0"
     pluginType: "dialog"
     width: 350
-    height: 300
+    height: 360
 
     // Reference octave: MIDI pitch of "do" with no octave dots
     // Default 60 = C4 (middle C)
@@ -306,17 +306,23 @@ MuseScore {
         Qt.quit();
     }
 
-    ColumnLayout {
-         anchors.fill: parent
-         anchors.margins: 10
+    Rectangle {
+        anchors.fill: parent
+        color: palette.window
 
-          Label {
-              text: "Reference Octave (octave where 1-7 have no dots)"
-              color: "#000000"
-          }
+        SystemPalette { id: palette }
+
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 10
+
+            Label {
+                text: "Reference Octave (octave where 1-7 have no dots)"
+                color: palette.windowText
+            }
 
          RowLayout {
-             Label { text: "Octave:" }
+             Label { text: "Octave:"; color: palette.windowText }
              ComboBox {
                  id: octaveSelect
                  model: ["2 (C2-B2)", "3 (C3-B3)", "4 (C4-B4)", "5 (C5-B5)", "6 (C6-B6)"]
@@ -330,7 +336,7 @@ MuseScore {
           Label {
               text: "Select voices to label:"
               Layout.topMargin: 15
-              color: "#000000"
+              color: palette.windowText
           }
 
           ColumnLayout {
@@ -340,9 +346,10 @@ MuseScore {
                   checked: true
                   onCheckedChanged: voice1Selected = checked
                   contentItem: Text {
-                      text: "Voice 1"
-                      color: "#000000"
+                      text: parent.text
+                      color: palette.windowText
                       leftPadding: parent.indicator.width + parent.spacing
+                      verticalAlignment: Text.AlignVCenter
                   }
               }
               
@@ -352,9 +359,10 @@ MuseScore {
                   checked: false
                   onCheckedChanged: voice2Selected = checked
                   contentItem: Text {
-                      text: "Voice 2"
-                      color: "#000000"
+                      text: parent.text
+                      color: palette.windowText
                       leftPadding: parent.indicator.width + parent.spacing
+                      verticalAlignment: Text.AlignVCenter
                   }
               }
               
@@ -364,9 +372,10 @@ MuseScore {
                   checked: false
                   onCheckedChanged: voice3Selected = checked
                   contentItem: Text {
-                      text: "Voice 3"
-                      color: "#000000"
+                      text: parent.text
+                      color: palette.windowText
                       leftPadding: parent.indicator.width + parent.spacing
+                      verticalAlignment: Text.AlignVCenter
                   }
               }
               
@@ -376,9 +385,10 @@ MuseScore {
                   checked: false
                   onCheckedChanged: voice4Selected = checked
                   contentItem: Text {
-                      text: "Voice 4"
-                      color: "#000000"
+                      text: parent.text
+                      color: palette.windowText
                       leftPadding: parent.indicator.width + parent.spacing
+                      verticalAlignment: Text.AlignVCenter
                   }
               }
           }
@@ -397,5 +407,6 @@ MuseScore {
                  onClicked: Qt.quit()
              }
          }
-     }
- }
+        }
+    }
+}
