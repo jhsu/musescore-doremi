@@ -53,36 +53,43 @@ MuseScore {
     }
 
     onRun: {
-        if (!curScore.selection.elements.length) {
-            console.log("No selection");
+        var startSegment = curScore.selection.startSegment;
+        var endTick = curScore.selection.endSegment ? curScore.selection.endSegment.tick : curScore.lastSegment.tick + 1;
+
+        if (!startSegment) {
+            console.log("No range selection");
             Qt.quit();
             return;
         }
 
         curScore.startCmd();
 
-        var selection = curScore.selection.elements;
-        for (var i = 0; i < selection.length; i++) {
-            var el = selection[i];
-            if (el.type !== Element.NOTE) continue;
+        var cursor = curScore.newCursor();
+        cursor.rewind(Cursor.SELECTION_START);
+        var staffIdx = cursor.staffIdx;
 
-            var note = el;
-            var chord = note.parent;
-            var segment = chord.parent;
-            var tick = segment.tick;
+        while (cursor.segment && cursor.tick < endTick) {
+            if (cursor.element && cursor.element.type === Element.CHORD) {
+                var chord = cursor.element;
+                var notes = chord.notes;
+                var tick = cursor.tick;
 
-            var keySig = getKeySigAtTick(tick);
-            var keyTpc = keySigToTpc(keySig);
-            var diff = note.tpc - keyTpc;
-            var solfege = intervalToSolfege(diff);
+                var keySig = getKeySigAtTick(tick);
+                var keyTpc = keySigToTpc(keySig);
 
-            var text = newElement(Element.STAFF_TEXT);
-            text.text = solfege;
-            text.placement = Placement.BELOW;
+                for (var i = 0; i < notes.length; i++) {
+                    var note = notes[i];
+                    var diff = note.tpc - keyTpc;
+                    var solfege = intervalToSolfege(diff);
 
-            var cursor = curScore.newCursor();
-            cursor.rewindToTick(tick);
-            cursor.add(text);
+                    var text = newElement(Element.STAFF_TEXT);
+                    text.text = solfege;
+                    text.placement = Placement.BELOW;
+
+                    cursor.add(text);
+                }
+            }
+            cursor.next();
         }
 
         curScore.endCmd();
