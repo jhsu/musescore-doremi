@@ -98,12 +98,28 @@ MuseScore {
     // Half note: 1 -
     // Whole note: 1 - - -
     // Dotted: append . (e.g., 1.)
-    function formatDuration(jianpu, duration, dots, isRest) {
+    function formatDuration(jianpu, duration, isRest) {
         var numerator = duration.numerator;
         var denominator = duration.denominator;
 
+        // Detect dots from the fraction
+        // Dotted notes have numerator 3, 7, 15... (2^n - 1) patterns
+        var dots = 0;
+        var baseDenom = denominator;
+
+        if (numerator === 3) {
+            dots = 1;
+            baseDenom = denominator / 2;  // e.g., 3/8 -> base is 1/4
+        } else if (numerator === 7) {
+            dots = 2;
+            baseDenom = denominator / 4;  // e.g., 7/16 -> base is 1/4
+        } else if (numerator === 15) {
+            dots = 3;
+            baseDenom = denominator / 8;
+        }
+
         // Calculate base note value (quarter = 1/4)
-        var value = numerator / denominator;
+        var value = 1 / baseDenom;
 
         var result = jianpu;
 
@@ -123,14 +139,14 @@ MuseScore {
         else if (value >= 1/2) {
             if (isRest) {
                 // Rests: repeat 0 for each quarter beat
-                var quarters = Math.floor(value / (1/4));
+                var quarters = Math.round(value / (1/4));
                 result = "0";
                 for (var q = 1; q < quarters; q++) {
                     result += " 0";
                 }
             } else {
                 // Notes: add dashes
-                var dashes = Math.floor(value / (1/4)) - 1;
+                var dashes = Math.round(value / (1/4)) - 1;
                 for (var d = 0; d < dashes; d++) {
                     result += " -";
                 }
@@ -138,13 +154,8 @@ MuseScore {
         }
 
         // Add dots for dotted notes
-        if (dots > 0) {
-            // For repeated rests (0 0 0 0), don't add dots
-            if (!(isRest && value >= 1/2)) {
-                for (var i = 0; i < dots; i++) {
-                    result += ".";
-                }
-            }
+        for (var i = 0; i < dots; i++) {
+            result += ".";
         }
 
         return result;
@@ -252,7 +263,6 @@ MuseScore {
                         var notes = chord.notes;
                         var tick = cursor.tick;
                         var duration = chord.duration;
-                        var dots = chord.dots;
 
                         var keySig = getKeySigAtTick(cursor);
                         var keyTpc = keySigToTpc(keySig);
@@ -264,7 +274,7 @@ MuseScore {
                             var jianpu = accidental + intervalToJianpu(diff);
                             var octave = getOctave(note);
                             jianpu = addOctaveMarkers(jianpu, octave);
-                            var label = formatDuration(jianpu, duration, dots, false);
+                            var label = formatDuration(jianpu, duration, false);
 
                             var text = newElement(Element.STAFF_TEXT);
                             text.text = label;
@@ -288,8 +298,7 @@ MuseScore {
                             continue;
                         }
 
-                        var dots = rest.dots;
-                        var label = formatDuration("0", duration, dots, true);
+                        var label = formatDuration("0", duration, true);
 
                         var text = newElement(Element.STAFF_TEXT);
                         text.text = label;
