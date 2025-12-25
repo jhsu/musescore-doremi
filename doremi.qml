@@ -8,12 +8,18 @@ MuseScore {
     description: "Label selected notes with jianpu notation (for use with JianpuASCII font)"
     version: "1.0"
     pluginType: "dialog"
-    width: 300
-    height: 150
+    width: 350
+    height: 300
 
     // Reference octave: MIDI pitch of "do" with no octave dots
     // Default 60 = C4 (middle C)
     property int referenceOctave: 4
+    
+    // Voice selection state
+    property bool voice1Selected: true
+    property bool voice2Selected: false
+    property bool voice3Selected: false
+    property bool voice4Selected: false
 
     // Map TPC difference to jianpu number (movable do, diatonic only)
     function intervalToJianpu(diff) {
@@ -149,9 +155,19 @@ MuseScore {
     }
 
     function keySigToTpc(keySig) {
-        // keySig: -7 (Cb) to +7 (C#), 0 = C
-        // TPC of the tonic: C=14, G=21, D=16, etc.
-        return 14 + keySig;
+         // keySig: -7 (Cb) to +7 (C#), 0 = C
+         // TPC of the tonic: C=14, G=21, D=16, etc.
+         return 14 + keySig;
+     }
+    
+    // Check if a voice is selected
+    function isVoiceSelected(voiceNumber) {
+        // voiceNumber is 0-based (0, 1, 2, 3 for voices 1-4)
+        if (voiceNumber === 0) return voice1Selected;
+        if (voiceNumber === 1) return voice2Selected;
+        if (voiceNumber === 2) return voice3Selected;
+        if (voiceNumber === 3) return voice4Selected;
+        return false;
     }
 
     // Check if text looks like jianpu notation
@@ -214,99 +230,149 @@ MuseScore {
         }
 
         while (cursor.segment && cursor.tick < endTick) {
-            var element = cursor.element;
-            
-            if (element && element.type === Element.CHORD) {
-                var chord = element;
-                var notes = chord.notes;
-                var tick = cursor.tick;
-                var duration = chord.duration;
-                var dots = chord.dots;
+             var element = cursor.element;
+             
+             if (element && element.type === Element.CHORD) {
+                 var chord = element;
+                 var notes = chord.notes;
+                 var tick = cursor.tick;
+                 var duration = chord.duration;
+                 var dots = chord.dots;
+                 var voiceNumber = chord.voice;
 
-                var keySig = getKeySigAtTick(cursor);
-                var keyTpc = keySigToTpc(keySig);
+                 // Skip chords not in selected voices
+                 if (!isVoiceSelected(voiceNumber)) {
+                     cursor.next();
+                     continue;
+                 }
 
-                for (var i = 0; i < notes.length; i++) {
-                    var note = notes[i];
-                    var diff = note.tpc - keyTpc;
-                    var accidental = getAccidental(note, keyTpc);
-                    var jianpu = accidental + intervalToJianpu(diff);
-                    var octave = getOctave(note);
-                    jianpu = addOctaveMarkers(jianpu, octave);
-                    var label = formatDuration(jianpu, duration, dots, false);
+                 var keySig = getKeySigAtTick(cursor);
+                 var keyTpc = keySigToTpc(keySig);
 
-                    var text = newElement(Element.STAFF_TEXT);
-                    text.text = label;
-                    text.fontFace = "Jianpu ASCII";
-                    text.placement = Placement.ABOVE;
+                 for (var i = 0; i < notes.length; i++) {
+                     var note = notes[i];
+                     var diff = note.tpc - keyTpc;
+                     var accidental = getAccidental(note, keyTpc);
+                     var jianpu = accidental + intervalToJianpu(diff);
+                     var octave = getOctave(note);
+                     jianpu = addOctaveMarkers(jianpu, octave);
+                     var label = formatDuration(jianpu, duration, dots, false);
 
-                    cursor.add(text);
-                }
-            }
-            else if (element && element.type === Element.REST) {
-                var rest = element;
-                var duration = rest.duration;
-                
-                // Skip full measure rests (duration equals time signature)
-                var timeSigNum = cursor.measure.timesigActual.numerator;
-                var timeSigDen = cursor.measure.timesigActual.denominator;
-                var restValue = duration.numerator / duration.denominator;
-                var measureValue = timeSigNum / timeSigDen;
-                
-                if (restValue >= measureValue) {
-                    cursor.next();
-                    continue;
-                }
-                
-                var dots = rest.dots;
-                var label = formatDuration("0", duration, dots, true);
+                     var text = newElement(Element.STAFF_TEXT);
+                     text.text = label;
+                     text.fontFace = "Jianpu ASCII";
+                     text.placement = Placement.ABOVE;
 
-                var text = newElement(Element.STAFF_TEXT);
-                text.text = label;
-                text.fontFace = "Jianpu ASCII";
-                text.placement = Placement.ABOVE;
+                     cursor.add(text);
+                 }
+             }
+             else if (element && element.type === Element.REST) {
+                 var rest = element;
+                 var duration = rest.duration;
+                 var voiceNumber = rest.voice;
+                 
+                 // Skip rests not in selected voices
+                 if (!isVoiceSelected(voiceNumber)) {
+                     cursor.next();
+                     continue;
+                 }
+                 
+                 // Skip full measure rests (duration equals time signature)
+                 var timeSigNum = cursor.measure.timesigActual.numerator;
+                 var timeSigDen = cursor.measure.timesigActual.denominator;
+                 var restValue = duration.numerator / duration.denominator;
+                 var measureValue = timeSigNum / timeSigDen;
+                 
+                 if (restValue >= measureValue) {
+                     cursor.next();
+                     continue;
+                 }
+                 
+                 var dots = rest.dots;
+                 var label = formatDuration("0", duration, dots, true);
 
-                cursor.add(text);
-            }
-            cursor.next();
-        }
+                 var text = newElement(Element.STAFF_TEXT);
+                 text.text = label;
+                 text.fontFace = "Jianpu ASCII";
+                 text.placement = Placement.ABOVE;
+
+                 cursor.add(text);
+             }
+             cursor.next();
+         }
 
         curScore.endCmd();
         Qt.quit();
     }
 
     ColumnLayout {
-        anchors.fill: parent
-        anchors.margins: 10
+         anchors.fill: parent
+         anchors.margins: 10
 
-        Label {
-            text: "Reference Octave (octave where 1-7 have no dots)"
-        }
+         Label {
+             text: "Reference Octave (octave where 1-7 have no dots)"
+         }
 
-        RowLayout {
-            Label { text: "Octave:" }
-            ComboBox {
-                id: octaveSelect
-                model: ["2 (C2-B2)", "3 (C3-B3)", "4 (C4-B4)", "5 (C5-B5)", "6 (C6-B6)"]
-                currentIndex: 2  // Default to octave 4
-                onCurrentIndexChanged: {
-                    referenceOctave = currentIndex + 2;
-                }
-            }
-        }
+         RowLayout {
+             Label { text: "Octave:" }
+             ComboBox {
+                 id: octaveSelect
+                 model: ["2 (C2-B2)", "3 (C3-B3)", "4 (C4-B4)", "5 (C5-B5)", "6 (C6-B6)"]
+                 currentIndex: 2  // Default to octave 4
+                 onCurrentIndexChanged: {
+                     referenceOctave = currentIndex + 2;
+                 }
+             }
+         }
 
-        RowLayout {
-            Layout.alignment: Qt.AlignRight
-            
-            Button {
-                text: "Apply"
-                onClicked: applyJianpu()
-            }
-            
-            Button {
-                text: "Cancel"
-                onClicked: Qt.quit()
-            }
-        }
-    }
-}
+         Label {
+             text: "Select voices to label:"
+             Layout.topMargin: 15
+         }
+
+         ColumnLayout {
+             CheckBox {
+                 id: voice1Check
+                 text: "Voice 1"
+                 checked: true
+                 onCheckedChanged: voice1Selected = checked
+             }
+             
+             CheckBox {
+                 id: voice2Check
+                 text: "Voice 2"
+                 checked: false
+                 onCheckedChanged: voice2Selected = checked
+             }
+             
+             CheckBox {
+                 id: voice3Check
+                 text: "Voice 3"
+                 checked: false
+                 onCheckedChanged: voice3Selected = checked
+             }
+             
+             CheckBox {
+                 id: voice4Check
+                 text: "Voice 4"
+                 checked: false
+                 onCheckedChanged: voice4Selected = checked
+             }
+         }
+
+         RowLayout {
+             Layout.alignment: Qt.AlignRight
+             Layout.topMargin: 15
+             
+             Button {
+                 text: "Apply"
+                 onClicked: applyJianpu()
+             }
+             
+             Button {
+                 text: "Cancel"
+                 onClicked: Qt.quit()
+             }
+         }
+     }
+ }
