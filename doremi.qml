@@ -307,21 +307,14 @@ MuseScore {
                     continue;
                 }
 
+                // Set staff and voice, then rewind to start position
+                // Note: rewind() resets staffIdx, so we must set it after rewinding
+                cursor.rewind(Cursor.SCORE_START);
                 cursor.staffIdx = staff;
                 cursor.voice = voice;
-
-                if (hasSelection) {
-                    cursor.rewind(Cursor.SELECTION_START);
-                } else {
-                    cursor.rewind(Cursor.SCORE_START);
-                }
+                cursor.rewindToTick(startTick);
 
                 while (cursor.segment && cursor.tick < endTick) {
-                    // Ensure we're still on the correct staff (cursor.next() can jump staves)
-                    if (cursor.staffIdx !== staff) {
-                        cursor.next();
-                        continue;
-                    }
 
                     var element = cursor.element;
 
