@@ -1,10 +1,19 @@
 import QtQuick 2.9
+import QtQuick.Controls 2.2
+import QtQuick.Layouts 1.2
 import MuseScore 3.0
 
 MuseScore {
     menuPath: "Plugins.Jianpu Labels"
     description: "Label selected notes with jianpu notation (for use with JianpuASCII font)"
     version: "1.0"
+    pluginType: "dialog"
+    width: 300
+    height: 150
+
+    // Reference octave: MIDI pitch of "do" with no octave dots
+    // Default 60 = C4 (middle C)
+    property int referenceOctave: 4
 
     // Map TPC difference to jianpu number (movable do, diatonic only)
     function intervalToJianpu(diff) {
@@ -28,7 +37,7 @@ MuseScore {
     }
 
     // Add octave markers using JianpuASCII font syntax
-    // octave: 0 = middle octave (C4-B4), positive = higher, negative = lower
+    // octave: 0 = reference octave, positive = higher, negative = lower
     // Higher octave: append ' (e.g., 1' 1'')
     // Lower octave: append , (e.g., 1, 1,,)
     function addOctaveMarkers(jianpu, octave) {
@@ -43,13 +52,38 @@ MuseScore {
         return jianpu;
     }
 
-    // Calculate octave relative to middle octave (C4 = middle C = octave 0)
+    // Calculate octave relative to reference octave
     function getOctave(note) {
-        // MIDI pitch 60 = C4 (middle C)
         // Each octave is 12 semitones
         var pitch = note.pitch;
-        var octave = Math.floor(pitch / 12) - 5; // C4 (pitch 60) -> octave 0
-        return octave;
+        var noteOctave = Math.floor(pitch / 12) - 1; // MIDI octave (C4 = octave 4)
+        return noteOctave - referenceOctave;
+    }
+
+    // Get accidental by comparing TPC to determine chromatic alteration
+    // TPC (Tonal Pitch Class): encodes note name + accidental
+    // Circle of fifths positions for diatonic scale degrees relative to tonic:
+    // do=0, re=2, mi=4, fa=-1, sol=1, la=3, ti=5
+    function getAccidental(note, keyTpc) {
+        var diff = note.tpc - keyTpc;
+        
+        // Diatonic TPC differences (no accidentals needed)
+        var diatonicDiffs = [0, 1, 2, 3, 4, 5, -1];
+        
+        for (var i = 0; i < diatonicDiffs.length; i++) {
+            if (diff === diatonicDiffs[i]) {
+                return "";
+            }
+        }
+        
+        // Not diatonic - determine sharp or flat
+        // Sharps are on the positive side of circle of fifths (> 5)
+        // Flats are on the negative side (< -1)
+        if (diff > 5) {
+            return "#";
+        } else {
+            return "b";
+        }
     }
 
     // Convert note duration to jianpu length notation using JianpuASCII font syntax
@@ -110,19 +144,8 @@ MuseScore {
         return result;
     }
 
-    function getKeySigAtTick(tick) {
-        var cursor = curScore.newCursor();
-        cursor.rewind(Cursor.SCORE_START);
-        var keySig = 0; // C major default
-        
-        while (cursor.segment && cursor.tick <= tick) {
-            var seg = cursor.segment;
-            if (seg.elementAt(0) && seg.elementAt(0).type === Element.KEYSIG) {
-                keySig = seg.elementAt(0).key;
-            }
-            cursor.next();
-        }
-        return keySig;
+    function getKeySigAtTick(cursor) {
+        return cursor.keySignature;
     }
 
     function keySigToTpc(keySig) {
@@ -131,7 +154,7 @@ MuseScore {
         return 14 + keySig;
     }
 
-    onRun: {
+    function applyJianpu() {
         var startSegment = curScore.selection.startSegment;
         var endTick = curScore.selection.endSegment ? curScore.selection.endSegment.tick : curScore.lastSegment.tick + 1;
 
@@ -156,20 +179,22 @@ MuseScore {
                 var duration = chord.duration;
                 var dots = chord.dots;
 
-                var keySig = getKeySigAtTick(tick);
+                var keySig = getKeySigAtTick(cursor);
                 var keyTpc = keySigToTpc(keySig);
 
                 for (var i = 0; i < notes.length; i++) {
                     var note = notes[i];
                     var diff = note.tpc - keyTpc;
-                    var jianpu = intervalToJianpu(diff);
+                    var accidental = getAccidental(note, keyTpc);
+                    var jianpu = accidental + intervalToJianpu(diff);
                     var octave = getOctave(note);
                     jianpu = addOctaveMarkers(jianpu, octave);
                     var label = formatDuration(jianpu, duration, dots, false);
 
                     var text = newElement(Element.STAFF_TEXT);
                     text.text = label;
-                    text.placement = Placement.BELOW;
+                    text.fontFace = "Jianpu ASCII";
+                    text.placement = Placement.ABOVE;
 
                     cursor.add(text);
                 }
@@ -182,7 +207,8 @@ MuseScore {
 
                 var text = newElement(Element.STAFF_TEXT);
                 text.text = label;
-                text.placement = Placement.BELOW;
+                text.fontFace = "Jianpu ASCII";
+                text.placement = Placement.ABOVE;
 
                 cursor.add(text);
             }
@@ -191,5 +217,40 @@ MuseScore {
 
         curScore.endCmd();
         Qt.quit();
+    }
+
+    ColumnLayout {
+        anchors.fill: parent
+        anchors.margins: 10
+
+        Label {
+            text: "Reference Octave (octave where 1-7 have no dots)"
+        }
+
+        RowLayout {
+            Label { text: "Octave:" }
+            ComboBox {
+                id: octaveSelect
+                model: ["2 (C2-B2)", "3 (C3-B3)", "4 (C4-B4)", "5 (C5-B5)", "6 (C6-B6)"]
+                currentIndex: 2  // Default to octave 4
+                onCurrentIndexChanged: {
+                    referenceOctave = currentIndex + 2;
+                }
+            }
+        }
+
+        RowLayout {
+            Layout.alignment: Qt.AlignRight
+            
+            Button {
+                text: "Apply"
+                onClicked: applyJianpu()
+            }
+            
+            Button {
+                text: "Cancel"
+                onClicked: Qt.quit()
+            }
+        }
     }
 }
