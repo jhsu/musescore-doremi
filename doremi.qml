@@ -269,7 +269,6 @@ MuseScore {
                             var text = newElement(Element.STAFF_TEXT);
                             text.text = label;
                             text.fontFace = "Jianpu ASCII";
-                            text.placement = Placement.ABOVE;
 
                             cursor.add(text);
                         }
@@ -295,7 +294,6 @@ MuseScore {
                         var text = newElement(Element.STAFF_TEXT);
                         text.text = label;
                         text.fontFace = "Jianpu ASCII";
-                        text.placement = Placement.ABOVE;
 
                         cursor.add(text);
                     }
