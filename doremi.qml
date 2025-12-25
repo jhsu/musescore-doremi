@@ -154,6 +154,40 @@ MuseScore {
         return 14 + keySig;
     }
 
+    // Check if text looks like jianpu notation
+    function isJianpuLabel(text) {
+        if (!text) return false;
+        // Jianpu labels contain only: 0-7, #, b, /, -, ., ', ,, and spaces
+        var jianpuPattern = /^[0-7#b\/\-\.\'\, ]+$/;
+        return jianpuPattern.test(text);
+    }
+
+    // Remove existing jianpu labels from the selection
+    function clearJianpuLabels(startTick, endTick) {
+        var toRemove = [];
+        
+        // Iterate through all segments in range
+        var segment = curScore.firstSegment();
+        while (segment) {
+            if (segment.tick >= startTick && segment.tick < endTick) {
+                // Check all annotations on this segment
+                var annotations = segment.annotations;
+                for (var i = 0; i < annotations.length; i++) {
+                    var ann = annotations[i];
+                    if (ann.type === Element.STAFF_TEXT && isJianpuLabel(ann.text)) {
+                        toRemove.push(ann);
+                    }
+                }
+            }
+            segment = segment.next;
+        }
+        
+        // Remove collected elements
+        for (var j = 0; j < toRemove.length; j++) {
+            removeElement(toRemove[j]);
+        }
+    }
+
     function applyJianpu() {
         var startSegment = curScore.selection.startSegment;
         var endTick = curScore.selection.endSegment ? curScore.selection.endSegment.tick : curScore.lastSegment.tick + 1;
@@ -164,7 +198,12 @@ MuseScore {
             return;
         }
 
+        var startTick = startSegment.tick;
+
         curScore.startCmd();
+
+        // Clear existing jianpu labels in selection
+        clearJianpuLabels(startTick, endTick);
 
         var cursor = curScore.newCursor();
         cursor.rewind(Cursor.SELECTION_START);
