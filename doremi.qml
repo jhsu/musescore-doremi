@@ -243,7 +243,7 @@ MuseScore {
     }
 
     // Remove existing jianpu labels from the selection
-    function clearJianpuLabels(startTick, endTick) {
+    function clearJianpuLabels(startTick, endTick, startStaff, endStaff) {
         var toRemove = [];
         
         // Iterate through all segments in range
@@ -254,8 +254,12 @@ MuseScore {
                 var annotations = segment.annotations;
                 for (var i = 0; i < annotations.length; i++) {
                     var ann = annotations[i];
-                    if (ann.type === Element.STAFF_TEXT && isJianpuLabel(ann.text)) {
-                        toRemove.push(ann);
+                    // Check if annotation is on a selected staff
+                    var annStaff = Math.floor(ann.track / 4);
+                    if (annStaff >= startStaff && annStaff < endStaff) {
+                        if (ann.type === Element.STAFF_TEXT && isJianpuLabel(ann.text)) {
+                            toRemove.push(ann);
+                        }
                     }
                 }
             }
@@ -270,27 +274,31 @@ MuseScore {
 
     function applyJianpu() {
         var startTick, endTick;
+        var startStaff, endStaff;
         var hasSelection = curScore.selection.startSegment;
 
         if (hasSelection) {
             startTick = curScore.selection.startSegment.tick;
             endTick = curScore.selection.endSegment ? curScore.selection.endSegment.tick : curScore.lastSegment.tick + 1;
+            startStaff = curScore.selection.startStaff;
+            endStaff = curScore.selection.endStaff;
         } else {
             // No selection - process entire score
             startTick = 0;
             endTick = curScore.lastSegment.tick + 1;
+            startStaff = 0;
+            endStaff = curScore.nstaves;
         }
 
         curScore.startCmd();
 
         // Clear existing jianpu labels in range
-        clearJianpuLabels(startTick, endTick);
+        clearJianpuLabels(startTick, endTick, startStaff, endStaff);
 
         var cursor = curScore.newCursor();
-        var numStaves = curScore.nstaves;
 
-        // Iterate through all staves and all 4 voices (reverse order so voice 1 appears on top)
-        for (var staff = 0; staff < numStaves; staff++) {
+        // Iterate through selected staves and all 4 voices (reverse order so voice 1 appears on top)
+        for (var staff = startStaff; staff < endStaff; staff++) {
             for (var voice = 3; voice >= 0; voice--) {
                 var voiceNumber = voice + 1;  // Convert 0-based to 1-based
 
@@ -309,6 +317,12 @@ MuseScore {
                 }
 
                 while (cursor.segment && cursor.tick < endTick) {
+                    // Ensure we're still on the correct staff (cursor.next() can jump staves)
+                    if (cursor.staffIdx !== staff) {
+                        cursor.next();
+                        continue;
+                    }
+
                     var element = cursor.element;
 
                     if (element && element.type === Element.CHORD) {
