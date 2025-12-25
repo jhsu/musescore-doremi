@@ -9,11 +9,14 @@ MuseScore {
     version: "1.0"
     pluginType: "dialog"
     width: 300
-    height: 150
+    height: 200
 
     // Reference octave: MIDI pitch of "do" with no octave dots
     // Default 60 = C4 (middle C)
     property int referenceOctave: 4
+
+    // Font for jianpu notation labels
+    property string selectedFont: "Jianpu ASCII"
 
     // Map TPC difference to jianpu number (movable do, diatonic only)
     function intervalToJianpu(diff) {
@@ -237,7 +240,7 @@ MuseScore {
 
                     var text = newElement(Element.STAFF_TEXT);
                     text.text = label;
-                    text.fontFace = "Jianpu ASCII";
+                    text.fontFace = selectedFont;
                     text.placement = Placement.ABOVE;
 
                     cursor.add(text);
@@ -263,7 +266,7 @@ MuseScore {
 
                 var text = newElement(Element.STAFF_TEXT);
                 text.text = label;
-                text.fontFace = "Jianpu ASCII";
+                text.fontFace = selectedFont;
                 text.placement = Placement.ABOVE;
 
                 cursor.add(text);
@@ -291,6 +294,18 @@ MuseScore {
                 currentIndex: 2  // Default to octave 4
                 onCurrentIndexChanged: {
                     referenceOctave = currentIndex + 2;
+                }
+            }
+        }
+
+        RowLayout {
+            Label { text: "Font:" }
+            ComboBox {
+                id: fontSelect
+                model: ["Jianpu ASCII", "Jianpu3", "Jianpu NotoSerifSC"]
+                currentIndex: 0  // Default to Jianpu ASCII
+                onCurrentIndexChanged: {
+                    selectedFont = currentText;
                 }
             }
         }
