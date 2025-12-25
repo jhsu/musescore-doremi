@@ -11,15 +11,57 @@ MuseScore {
     width: 350
     height: 360
 
-    // Reference octave: MIDI pitch of "do" with no octave dots
-    // Default 60 = C4 (middle C)
+    // Reference octave: the octave where "do" has no dots
     property int referenceOctave: 4
     
+    // Key signature detected from score (TPC of tonic)
+    property int detectedKeyTpc: 14  // Default C
+    property string detectedKeyName: "C"
+
     // Voice selection state
     property bool voice1Selected: true
     property bool voice2Selected: false
     property bool voice3Selected: false
     property bool voice4Selected: false
+
+    // Convert TPC to note name
+    function tpcToNoteName(tpc) {
+        // TPC: Fb=6, Cb=7, Gb=8, Db=9, Ab=10, Eb=11, Bb=12, F=13, C=14, G=15, D=16, A=17, E=18, B=19, F#=20, C#=21, G#=22, D#=23, A#=24, E#=25, B#=26
+        var names = ["Fbb", "Cbb", "Gbb", "Dbb", "Abb", "Ebb", "Bbb",
+                     "Fb", "Cb", "Gb", "Db", "Ab", "Eb", "Bb",
+                     "F", "C", "G", "D", "A", "E", "B",
+                     "F#", "C#", "G#", "D#", "A#", "E#", "B#",
+                     "F##", "C##", "G##", "D##", "A##", "E##", "B##"];
+        var index = tpc + 1;  // TPC -1 = Fbb, so offset by 1
+        if (index >= 0 && index < names.length) {
+            return names[index];
+        }
+        return "?";
+    }
+
+    // Detect key signature from the score
+    function detectKeySignature() {
+        if (!curScore) return;
+
+        var cursor = curScore.newCursor();
+        cursor.rewind(Cursor.SCORE_START);
+        var keySig = cursor.keySignature;
+        detectedKeyTpc = 14 + keySig;  // C=14, keySig is -7 to +7
+        detectedKeyName = tpcToNoteName(detectedKeyTpc);
+    }
+
+    onRun: {
+        detectKeySignature();
+        updateOctaveLabels();
+    }
+
+    // Update octave labels in the ComboBox model
+    function updateOctaveLabels() {
+        for (var i = 0; i < octaveModel.count; i++) {
+            var item = octaveModel.get(i);
+            octaveModel.setProperty(i, "text", detectedKeyName + item.octave + " - " + item.desc);
+        }
+    }
 
     // Map TPC difference to jianpu number (movable do, diatonic only)
     function intervalToJianpu(diff) {
@@ -337,13 +379,13 @@ MuseScore {
             anchors.margins: 10
 
             Label {
-                text: "Reference Octave"
+                text: "Reference \"Do\" (1)"
                 color: palette.windowText
                 font.bold: true
             }
             
             Label {
-                text: "Select the octave that matches your voice/instrument range. The \"do\" (1) with no dots will be the key root in this octave."
+                text: "Key: " + detectedKeyName + " major. Select which " + detectedKeyName + " should be \"do\" (1) with no octave dots."
                 color: palette.windowText
                 wrapMode: Text.WordWrap
                 Layout.fillWidth: true
@@ -351,32 +393,22 @@ MuseScore {
             }
 
          RowLayout {
-              Label { text: "Octave:"; color: palette.windowText }
+              Label { text: "Do (1) ="; color: palette.windowText }
               ComboBox {
                   id: octaveSelect
-                  model: [
-                      "Octave 2 - Bass, Low Male",
-                      "Octave 3 - Tenor, High Male, Low Female",
-                      "Octave 4 - Soprano, Mezzo, Standard",
-                      "Octave 5 - High Soprano, Instruments",
-                      "Octave 6 - Very High, Flute"
-                  ]
+                  model: ListModel {
+                      id: octaveModel
+                      ListElement { text: ""; octave: 2; desc: "Bass, Low Male" }
+                      ListElement { text: ""; octave: 3; desc: "Tenor, Baritone, Alto" }
+                      ListElement { text: ""; octave: 4; desc: "Soprano, Mezzo (Standard)" }
+                      ListElement { text: ""; octave: 5; desc: "High Soprano, Instruments" }
+                      ListElement { text: ""; octave: 6; desc: "Very High, Piccolo" }
+                  }
+                  textRole: "text"
                   currentIndex: 2  // Default to octave 4
                   onCurrentIndexChanged: {
-                      referenceOctave = currentIndex + 2;
+                      referenceOctave = octaveModel.get(currentIndex).octave;
                   }
-                  ToolTip.text: {
-                      switch(currentIndex) {
-                          case 0: return "Bass and very low male voices (baritone, bass)";
-                          case 1: return "Tenor and high male voices, also low female voices (alto)";
-                          case 2: return "Soprano and mezzo soprano voices, most instruments, standard choice";
-                          case 3: return "High soprano voices and high instruments (flute, piccolo)";
-                          case 4: return "Very high soprano and piccolo ranges";
-                          default: return "Select an octave range";
-                      }
-                  }
-                  ToolTip.visible: hovered
-                  hoverEnabled: true
               }
           }
 
