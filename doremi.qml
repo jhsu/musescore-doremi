@@ -150,7 +150,9 @@ MuseScore {
     // Sixteenth note: suffix // (e.g., 1//)
     // Half note: 1 -
     // Whole note: 1 - - -
-    // Dotted: append . (e.g., 1.)
+    // Dotted quarter: 1.
+    // Dotted half: 1 - - (3 beats total)
+    // Dotted whole: 1 - - - - - (6 beats total)
     function formatDuration(jianpu, duration, isRest) {
         var numerator = duration.numerator;
         var denominator = duration.denominator;
@@ -172,43 +174,54 @@ MuseScore {
         }
 
         // Calculate base note value (quarter = 1/4)
-        var value = 1 / baseDenom;
+        var baseValue = 1 / baseDenom;
+
+        // Calculate total duration in quarter notes for half notes and longer
+        // For dotted notes: total = base * (2 - 1/2^dots)
+        // Dotted = 1.5x, double-dotted = 1.75x, triple-dotted = 1.875x
+        var totalValue = (numerator / denominator);
 
         var result = jianpu;
 
-        // Eighth note or shorter: add slashes
-        if (value <= 1/8) {
+        // Eighth note or shorter: add slashes, then dots
+        if (baseValue <= 1/8) {
             var slashes = 0;
-            if (value <= 1/64) slashes = 4;
-            else if (value <= 1/32) slashes = 3;
-            else if (value <= 1/16) slashes = 2;
-            else if (value <= 1/8) slashes = 1;
+            if (baseValue <= 1/64) slashes = 4;
+            else if (baseValue <= 1/32) slashes = 3;
+            else if (baseValue <= 1/16) slashes = 2;
+            else if (baseValue <= 1/8) slashes = 1;
             
             for (var s = 0; s < slashes; s++) {
                 result += "/";
             }
+            // For short notes, dots are appended as dots
+            for (var i = 0; i < dots; i++) {
+                result += ".";
+            }
         }
-        // Half note or longer
-        else if (value >= 1/2) {
+        // Quarter note: dots are appended as dots
+        else if (baseValue === 1/4) {
+            for (var i = 0; i < dots; i++) {
+                result += ".";
+            }
+        }
+        // Half note or longer: use dashes for full duration (including dots)
+        else if (baseValue >= 1/2) {
+            // Calculate total quarter beats
+            var quarters = Math.round(totalValue / (1/4));
             if (isRest) {
                 // Rests: repeat 0 for each quarter beat
-                var quarters = Math.round(value / (1/4));
                 result = "0";
                 for (var q = 1; q < quarters; q++) {
                     result += " 0";
                 }
             } else {
-                // Notes: add dashes
-                var dashes = Math.round(value / (1/4)) - 1;
+                // Notes: add dashes (quarters - 1 dashes after the number)
+                var dashes = quarters - 1;
                 for (var d = 0; d < dashes; d++) {
                     result += " -";
                 }
             }
-        }
-
-        // Add dots for dotted notes
-        for (var i = 0; i < dots; i++) {
-            result += ".";
         }
 
         return result;
