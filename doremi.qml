@@ -59,11 +59,22 @@ MuseScore {
     }
 
     // Calculate octave relative to reference octave
-    function getOctave(note) {
-        // Each octave is 12 semitones
+    // Octave changes at "do" (the key root), not at C
+    function getOctave(note, keyTpc) {
         var pitch = note.pitch;
-        var noteOctave = Math.floor(pitch / 12) - 1; // MIDI octave (C4 = octave 4)
-        return noteOctave - referenceOctave;
+
+        // TPC to pitch class: (tpc - 14) * 7, mod 12
+        // C=14->0, D=16->2, E=18->4, F=13->5, G=15->7, A=17->9, B=19->11
+        var keyPitchClass = (((keyTpc - 14) * 7) % 12 + 12) % 12;
+
+        // Calculate the reference "do" pitch (key root in the selected octave)
+        // MIDI pitch = pitchClass + 12 * (midiOctave + 1)
+        var referenceDoPitch = keyPitchClass + 12 * (referenceOctave + 1);
+
+        // Calculate octave relative to reference
+        // Notes from referenceDoPitch to referenceDoPitch+11 are octave 0
+        var diff = pitch - referenceDoPitch;
+        return Math.floor(diff / 12);
     }
 
     // Get accidental by comparing TPC to determine chromatic alteration
@@ -272,7 +283,7 @@ MuseScore {
                             var diff = note.tpc - keyTpc;
                             var accidental = getAccidental(note, keyTpc);
                             var jianpu = accidental + intervalToJianpu(diff);
-                            var octave = getOctave(note);
+                            var octave = getOctave(note, keyTpc);
                             jianpu = addOctaveMarkers(jianpu, octave);
                             var label = formatDuration(jianpu, duration, false);
 
@@ -332,7 +343,7 @@ MuseScore {
             }
             
             Label {
-                text: "Select the octave that matches your voice/instrument range (numbers 1-7 will have no dots in this octave)"
+                text: "Select the octave that matches your voice/instrument range. The \"do\" (1) with no dots will be the key root in this octave."
                 color: palette.windowText
                 wrapMode: Text.WordWrap
                 Layout.fillWidth: true
@@ -344,11 +355,11 @@ MuseScore {
               ComboBox {
                   id: octaveSelect
                   model: [
-                      "2 (C2-B2) - Bass, Low Male",
-                      "3 (C3-B3) - Tenor, High Male, Low Female",
-                      "4 (C4-B4) - Soprano, Mezzo, Standard",
-                      "5 (C5-B5) - High Soprano, Instruments",
-                      "6 (C6-B6) - Very High, Flute"
+                      "Octave 2 - Bass, Low Male",
+                      "Octave 3 - Tenor, High Male, Low Female",
+                      "Octave 4 - Soprano, Mezzo, Standard",
+                      "Octave 5 - High Soprano, Instruments",
+                      "Octave 6 - Very High, Flute"
                   ]
                   currentIndex: 2  // Default to octave 4
                   onCurrentIndexChanged: {
