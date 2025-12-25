@@ -11,13 +11,23 @@ This plugin outputs ASCII text designed to be used with the [JianpuASCII font](h
 ## Installation
 
 1. Download and install the [JianpuASCII font](https://github.com/RobertWinslow/jianpu-ascii-font/blob/main/JianpuASCII.ttf)
-2. Download `doremi.qml`
-3. Copy it to your MuseScore plugins folder:
-   - **macOS**: `~/Documents/MuseScore3/Plugins/`
-   - **Windows**: `%HOMEPATH%\Documents\MuseScore3\Plugins\`
-   - **Linux**: `~/Documents/MuseScore3/Plugins/`
-4. In MuseScore, go to **Plugins > Plugin Manager**
-5. Enable "Jianpu Labels"
+
+2. Install the plugin using one of these methods:
+
+   **Option A: Quick install (macOS)**
+   ```bash
+   curl -fsSL https://raw.githubusercontent.com/jhsu/musescore-doremi/main/install.sh | bash
+   ```
+
+   **Option B: Manual install**
+   - Download `doremi.qml`
+   - Copy it to your MuseScore plugins folder:
+     - **macOS**: `~/Documents/MuseScore3/Plugins/`
+     - **Windows**: `%HOMEPATH%\Documents\MuseScore3\Plugins\`
+     - **Linux**: `~/Documents/MuseScore3/Plugins/`
+
+3. In MuseScore, go to **Plugins > Plugin Manager**
+4. Enable "Jianpu Labels"
 
 ## Usage
 
@@ -54,13 +64,23 @@ MIT
 ## 安装
 
 1. 下载并安装 [JianpuASCII 字体](https://github.com/RobertWinslow/jianpu-ascii-font/blob/main/JianpuASCII.ttf)
-2. 下载 `doremi.qml`
-3. 复制到 MuseScore 插件文件夹：
-   - **macOS**: `~/Documents/MuseScore3/Plugins/`
-   - **Windows**: `%HOMEPATH%\Documents\MuseScore3\Plugins\`
-   - **Linux**: `~/Documents/MuseScore3/Plugins/`
-4. 在 MuseScore 中，前往 **插件 > 插件管理器**
-5. 启用 "Jianpu Labels"
+
+2. 使用以下方式之一安装插件：
+
+   **方式 A：快速安装（macOS）**
+   ```bash
+   curl -fsSL https://raw.githubusercontent.com/jhsu/musescore-doremi/main/install.sh | bash
+   ```
+
+   **方式 B：手动安装**
+   - 下载 `doremi.qml`
+   - 复制到 MuseScore 插件文件夹：
+     - **macOS**: `~/Documents/MuseScore3/Plugins/`
+     - **Windows**: `%HOMEPATH%\Documents\MuseScore3\Plugins\`
+     - **Linux**: `~/Documents/MuseScore3/Plugins/`
+
+3. 在 MuseScore 中，前往 **插件 > 插件管理器**
+4. 启用 "Jianpu Labels"
 
 ## 使用方法
 
