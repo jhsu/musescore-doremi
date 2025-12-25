@@ -223,83 +223,86 @@ MuseScore {
         clearJianpuLabels(startTick, endTick);
 
         var cursor = curScore.newCursor();
-        if (hasSelection) {
-            cursor.rewind(Cursor.SELECTION_START);
-        } else {
-            cursor.rewind(Cursor.SCORE_START);
+        var numStaves = curScore.nstaves;
+
+        // Iterate through all staves and all 4 voices (reverse order so voice 1 appears on top)
+        for (var staff = 0; staff < numStaves; staff++) {
+            for (var voice = 3; voice >= 0; voice--) {
+                var voiceNumber = voice + 1;  // Convert 0-based to 1-based
+
+                // Skip voices that aren't selected
+                if (!isVoiceSelected(voiceNumber)) {
+                    continue;
+                }
+
+                cursor.staffIdx = staff;
+                cursor.voice = voice;
+
+                if (hasSelection) {
+                    cursor.rewind(Cursor.SELECTION_START);
+                } else {
+                    cursor.rewind(Cursor.SCORE_START);
+                }
+
+                while (cursor.segment && cursor.tick < endTick) {
+                    var element = cursor.element;
+
+                    if (element && element.type === Element.CHORD) {
+                        var chord = element;
+                        var notes = chord.notes;
+                        var tick = cursor.tick;
+                        var duration = chord.duration;
+                        var dots = chord.dots;
+
+                        var keySig = getKeySigAtTick(cursor);
+                        var keyTpc = keySigToTpc(keySig);
+
+                        for (var i = 0; i < notes.length; i++) {
+                            var note = notes[i];
+                            var diff = note.tpc - keyTpc;
+                            var accidental = getAccidental(note, keyTpc);
+                            var jianpu = accidental + intervalToJianpu(diff);
+                            var octave = getOctave(note);
+                            jianpu = addOctaveMarkers(jianpu, octave);
+                            var label = formatDuration(jianpu, duration, dots, false);
+
+                            var text = newElement(Element.STAFF_TEXT);
+                            text.text = label;
+                            text.fontFace = "Jianpu ASCII";
+                            text.placement = Placement.ABOVE;
+
+                            cursor.add(text);
+                        }
+                    }
+                    else if (element && element.type === Element.REST) {
+                        var rest = element;
+                        var duration = rest.duration;
+
+                        // Skip full measure rests (duration equals time signature)
+                        var timeSigNum = cursor.measure.timesigActual.numerator;
+                        var timeSigDen = cursor.measure.timesigActual.denominator;
+                        var restValue = duration.numerator / duration.denominator;
+                        var measureValue = timeSigNum / timeSigDen;
+
+                        if (restValue >= measureValue) {
+                            cursor.next();
+                            continue;
+                        }
+
+                        var dots = rest.dots;
+                        var label = formatDuration("0", duration, dots, true);
+
+                        var text = newElement(Element.STAFF_TEXT);
+                        text.text = label;
+                        text.fontFace = "Jianpu ASCII";
+                        text.placement = Placement.ABOVE;
+
+                        cursor.add(text);
+                    }
+                    cursor.next();
+                }
+            }
         }
-
-        while (cursor.segment && cursor.tick < endTick) {
-             var element = cursor.element;
-             
-             if (element && element.type === Element.CHORD) {
-                 var chord = element;
-                 var notes = chord.notes;
-                 var tick = cursor.tick;
-                 var duration = chord.duration;
-                 var dots = chord.dots;
-                 var voiceNumber = chord.voice;
-
-                 // Skip chords not in selected voices
-                 if (!isVoiceSelected(voiceNumber)) {
-                     cursor.next();
-                     continue;
-                 }
-
-                 var keySig = getKeySigAtTick(cursor);
-                 var keyTpc = keySigToTpc(keySig);
-
-                 for (var i = 0; i < notes.length; i++) {
-                     var note = notes[i];
-                     var diff = note.tpc - keyTpc;
-                     var accidental = getAccidental(note, keyTpc);
-                     var jianpu = accidental + intervalToJianpu(diff);
-                     var octave = getOctave(note);
-                     jianpu = addOctaveMarkers(jianpu, octave);
-                     var label = formatDuration(jianpu, duration, dots, false);
-
-                     var text = newElement(Element.STAFF_TEXT);
-                     text.text = label;
-                     text.fontFace = "Jianpu ASCII";
-                     text.placement = Placement.ABOVE;
-
-                     cursor.add(text);
-                 }
-             }
-             else if (element && element.type === Element.REST) {
-                 var rest = element;
-                 var duration = rest.duration;
-                 var voiceNumber = rest.voice;
-                 
-                 // Skip rests not in selected voices
-                 if (!isVoiceSelected(voiceNumber)) {
-                     cursor.next();
-                     continue;
-                 }
-                 
-                 // Skip full measure rests (duration equals time signature)
-                 var timeSigNum = cursor.measure.timesigActual.numerator;
-                 var timeSigDen = cursor.measure.timesigActual.denominator;
-                 var restValue = duration.numerator / duration.denominator;
-                 var measureValue = timeSigNum / timeSigDen;
-                 
-                 if (restValue >= measureValue) {
-                     cursor.next();
-                     continue;
-                 }
-                 
-                 var dots = rest.dots;
-                 var label = formatDuration("0", duration, dots, true);
-
-                 var text = newElement(Element.STAFF_TEXT);
-                 text.text = label;
-                 text.fontFace = "Jianpu ASCII";
-                 text.placement = Placement.ABOVE;
-
-                 cursor.add(text);
-             }
-             cursor.next();
-         }
 
         curScore.endCmd();
         Qt.quit();
