@@ -2,23 +2,11 @@
 
 A MuseScore 3 plugin that labels selected notes with jianpu (简谱) notation using movable do relative to the current key signature.
 
+## What is Jianpu?
+
+Jianpu (简谱, "numbered musical notation") is a music notation system widely used in China and other Asian countries. It uses numbers 1-7 to represent scale degrees (do, re, mi, fa, sol, la, ti), with dots above or below for octaves and underlines for rhythm. It's especially popular for vocal music and traditional Chinese instruments.
+
 This plugin outputs ASCII text designed to be used with the [JianpuASCII font](https://github.com/RobertWinslow/jianpu-ascii-font).
-
-## Notation
-
-| Symbol | Output |
-|--------|--------|
-| Quarter note | `1` |
-| Half note | `1 -` |
-| Whole note | `1 - - -` |
-| Eighth note | `1/` |
-| Sixteenth note | `1//` |
-| Dotted | `1.` |
-| Octave up | `1'` |
-| Octave down | `1,` |
-| Sharp | `#1` |
-| Flat | `b1` |
-| Rest | `0` |
 
 ## Installation
 
@@ -57,23 +45,11 @@ MIT
 
 一个 MuseScore 3 插件，使用首调简谱记号根据当前调号为所选音符添加简谱标注。
 
+## 什么是简谱？
+
+简谱是一种在中国及其他亚洲国家广泛使用的记谱法。它用数字 1-7 表示音阶（do, re, mi, fa, sol, la, ti），用上下点表示八度，用下划线表示节奏。简谱特别适用于声乐和中国传统乐器。
+
 本插件输出的 ASCII 文本需配合 [JianpuASCII 字体](https://github.com/RobertWinslow/jianpu-ascii-font) 使用。
-
-## 记谱法
-
-| 符号 | 输出 |
-|------|------|
-| 四分音符 | `1` |
-| 二分音符 | `1 -` |
-| 全音符 | `1 - - -` |
-| 八分音符 | `1/` |
-| 十六分音符 | `1//` |
-| 附点 | `1.` |
-| 高八度 | `1'` |
-| 低八度 | `1,` |
-| 升号 | `#1` |
-| 降号 | `b1` |
-| 休止符 | `0` |
 
 ## 安装
 
