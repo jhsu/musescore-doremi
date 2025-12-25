@@ -246,6 +246,18 @@ MuseScore {
             else if (element && element.type === Element.REST) {
                 var rest = element;
                 var duration = rest.duration;
+                
+                // Skip full measure rests (duration equals time signature)
+                var timeSigNum = cursor.measure.timesigActual.numerator;
+                var timeSigDen = cursor.measure.timesigActual.denominator;
+                var restValue = duration.numerator / duration.denominator;
+                var measureValue = timeSigNum / timeSigDen;
+                
+                if (restValue >= measureValue) {
+                    cursor.next();
+                    continue;
+                }
+                
                 var dots = rest.dots;
                 var label = formatDuration("0", duration, dots, true);
 
