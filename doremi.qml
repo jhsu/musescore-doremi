@@ -279,6 +279,7 @@ MuseScore {
                             var text = newElement(Element.STAFF_TEXT);
                             text.text = label;
                             text.fontFace = "Jianpu ASCII";
+                            text.track = cursor.track;
 
                             cursor.add(text);
                         }
@@ -300,11 +301,12 @@ MuseScore {
 
                         var label = formatDuration("0", duration, true);
 
-                        var text = newElement(Element.STAFF_TEXT);
-                        text.text = label;
-                        text.fontFace = "Jianpu ASCII";
+                         var text = newElement(Element.STAFF_TEXT);
+                         text.text = label;
+                         text.fontFace = "Jianpu ASCII";
+                         text.track = cursor.track;
 
-                        cursor.add(text);
+                         cursor.add(text);
                     }
                     cursor.next();
                 }
